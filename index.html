@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Task Report Manager</title>
+        <link rel="stylesheet" href="style.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <h1>Task <span id="accent">Report</span> Manager</h1>
+        <div class="calendar">
+            <header>
+                <button id="prev"> ← Prev</button>
+                <span class="month-year">Month - Year</span>
+                <button id="next"> Next → </button>
+            </header>
+        </div>
+        <div class="card">
+            <div id="ownersList"></div>
+            <input id="ownerInput" type="text" placeholder="Add Owner Name...">
+            <button id="addOwner"> + Add Owner </button>
+        </div>
+        <div class="card">
+            <div id="taskID">
+                <input id="addTaskID" placeholder="e.g. TSK-007">
+                <label for="Owners">Owner:</label>
+                <select id="owners" name="owners">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="taskDescription">
+                <input id="taskDescription" type="text" placeholder="Describe The Task...">
+            </div>
+            <div id="dateTime">
+                <input type="datetime-local" id="dateTimeInput" placeholder="dd-mm-yyyy --:--">
+                <label for="status">Status:</label>
+                <select id="status" name="status">
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Not Started">Not Started</option>
+                </select>
+            </div>
+            <div id="completionTime">
+                <input type="datetime-local" id="completionTimeInput" placeholder="dd-mm-yyyy --:--">
+                <input id="dependency" placeholder="Dependency">
+            </div>
+            <div id="hrs-row">
+                <input type="number" id="hrsLogged" placeholder="0">
+            </div>
+            <div id="btn">
+                <button id="clearBtn">Clear</button>
+                <button id="addTask"> + Add Task </button>
+            </div>
+        </div>
+        <div id="summary">
+            <div class="pill"><span id="totalCount">0</span><p>Total</p></div>
+            <div class="pill"><span id="completedCount">0</span><p>Completed</p></div>
+            <div class="pill"><span id="inProgressCount">0</span><p>In Progress</p></div>
+            <div class="pill"><span id="pendingCount">0</span><p>Pending</p></div>
+            <div class="pill"><span id="notStartedCount">0</span><p>Not Started</p></div>
+            <div class="pill"><span id="totalHrs">0</span><p>Total Hrs</p></div>
+        </div>
+        <button id="GenerateReport">Generate Report</button>
+        <table id="tasksTable">
+            <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Description</th>
+                    <th>Owner</th>
+                    <th>Assigned</th>
+                    <th>Status</th>
+                    <th>Completed</th>
+                    <th>Dependency</th>
+                    <th>Hrs</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <script src="script.js"></script>
+    </body>
+</html>
