@@ -4,16 +4,7 @@ let month_year = document.querySelector(".month-year")
 let ownersList = document.getElementById("ownersList")
 let ownerInput = document.getElementById("ownerInput")
 let addOwner = document.getElementById("addOwner")
-let addTaskID = document.getElementById("addTaskID")
 let owners = document.getElementById("owners")
-let taskDescription = document.getElementById("taskDescription")
-let dateTimeInput = document.getElementById("dateTimeInput")
-let status = document.getElementById("status")
-let completionTimeInput = document.getElementById("completionTimeInput")
-let dependency = document.getElementById("dependency")
-let hrsLogged = document.getElementById("hrsLogged")
-let clearBtn = document.getElementById("clearBtn")
-let addTask = document.getElementById("addTask")
 let totalCount = document.getElementById("totalCount")
 let completedCount = document.getElementById("completedCount")
 let inProgressCount = document.getElementById("inProgressCount")
@@ -22,6 +13,8 @@ let notStartedCount = document.getElementById("notStartedCount")
 let totalHrs = document.getElementById("totalHrs")
 let GenerateReport = document.getElementById("GenerateReport")
 let tableBody = document.getElementById("tableBody")
+
+const TOTAL_ROWS = 100
 
 let currentDate = new Date()
 let tasks = []
@@ -40,10 +33,7 @@ function updateMonthLabel() {
 
 function saveData() {
     let key = getCurrentMonthKey()
-    let data = {
-        tasks: tasks,
-        ownerNames: ownerNames
-    }
+    let data = { tasks: tasks, ownerNames: ownerNames }
     localStorage.setItem(key, JSON.stringify(data))
 }
 
@@ -55,31 +45,34 @@ function loadData() {
         tasks = data.tasks
         ownerNames = data.ownerNames
     } else {
-        tasks = []
+        tasks = Array.from({ length: TOTAL_ROWS }, () => ({
+            taskID: "", owner: "", description: "", assignedDate: "",
+            taskStatus: "Not Started", completionDate: "", dep: "", hrs: ""
+        }))
         ownerNames = []
+    }
+    if (tasks.length < TOTAL_ROWS) {
+        let extra = Array.from({ length: TOTAL_ROWS - tasks.length }, () => ({
+            taskID: "", owner: "", description: "", assignedDate: "",
+            taskStatus: "Not Started", completionDate: "", dep: "", hrs: ""
+        }))
+        tasks = [...tasks, ...extra]
     }
 }
 
 function renderOwners() {
     ownersList.innerHTML = ""
-    owners.innerHTML = ""
     ownerNames.forEach(function(name) {
         let tag = document.createElement("div")
         tag.className = "owner-tag"
         tag.innerHTML = `${name} <span>×</span>`
         ownersList.appendChild(tag)
-
         tag.querySelector("span").addEventListener("click", function() {
             let index = ownerNames.indexOf(name)
             ownerNames.splice(index, 1)
             saveData()
             renderOwners()
         })
-
-        let option = document.createElement("option")
-        option.value = name
-        option.textContent = name
-        owners.appendChild(option)
     })
 }
 
@@ -94,71 +87,70 @@ function addOwnerName() {
 
 addOwner.addEventListener("click", addOwnerName)
 
-function addTaskItem() {
-    let taskID = addTaskID.value.trim()
-    let owner = owners.value
-    let description = taskDescription.value.trim()
-    let assignedDate = dateTimeInput.value
-    let taskStatus = status.value
-    let completionDate = completionTimeInput.value
-    let dep = dependency.value.trim()
-    let hrs = hrsLogged.value
-
-    if (taskID === "" || description === "") return
-    let task = {
-        taskID: taskID,
-        owner: owner,
-        description: description,
-        assignedDate: assignedDate,
-        taskStatus: taskStatus,
-        completionDate: completionDate,
-        dep: dep,
-        hrs: hrs
-    }
-    tasks.push(task)
-    saveData()
-    renderTable()
-    updateSummary()
-    
-    addTaskID.value = ""
-    owners.value = ""
-    taskDescription.value = ""
-    dateTimeInput.value = ""
-    status.value = "Completed"
-    completionTimeInput.value = ""
-    dependency.value = ""
-    hrsLogged.value = ""
-}
-
-addTask.addEventListener("click", addTaskItem)
-
 function renderTable() {
     tableBody.innerHTML = ""
     tasks.forEach(function(task, index) {
         let tr = document.createElement("tr")
         tr.innerHTML = `
-            <td>${task.taskID}</td>
-            <td>${task.description}</td>
-            <td>${task.owner}</td>
-            <td>${task.assignedDate}</td>
-            <td>${task.taskStatus}</td>
-            <td>${task.completionDate || "-"}</td>
-            <td>${task.dep || "-"}</td>
-            <td>${task.hrs || "-"}</td>
-            <td><button onclick="deleteTask(${index})">✕</button></td>
+            <td contenteditable="true">${task.taskID}</td>
+            <td contenteditable="true">${task.description}</td>
+            <td>
+            <select onchange="updateOwner(${index}, this.value)">
+            <option value="">-- Select --</option>
+            ${ownerNames.map(name => `<option ${task.owner === name ? 'selected' : ''} value="${name}">${name}</option>`).join("")}
+            </select>
+            </td>
+            <td contenteditable="true">${task.assignedDate}</td>
+            <td>
+                <select onchange="updateStatus(${index}, this.value)">
+                    <option ${task.taskStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                    <option ${task.taskStatus === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option ${task.taskStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option ${task.taskStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                </select>
+            </td>
+            <td contenteditable="true">${task.completionDate}</td>
+            <td contenteditable="true">${task.dep}</td>
+            <td contenteditable="true">${task.hrs}</td>
+            <td><button onclick="deleteRow(${index})">✕</button></td>
         `
         tableBody.appendChild(tr)
+        let cells = tr.querySelectorAll("td[contenteditable]")
+        cells[0].addEventListener("blur", function() { tasks[index].taskID = cells[0].innerText.trim(); saveData(); updateSummary() })
+        cells[1].addEventListener("blur", function() { tasks[index].description = cells[1].innerText.trim(); saveData() })
+        cells[2].addEventListener("blur", function() { tasks[index].assignedDate = cells[2].innerText.trim(); saveData() })
+        cells[3].addEventListener("blur", function() { tasks[index].completionDate = cells[3].innerText.trim(); saveData() })
+        cells[4].addEventListener("blur", function() { tasks[index].dep = cells[4].innerText.trim(); saveData() })
+        cells[5].addEventListener("blur", function() { tasks[index].hrs = cells[5].innerText.trim(); saveData(); updateSummary() })
     })
 }
 
-function updateSummary() {
-    let total = tasks.length
-    let completed = tasks.filter(function(task) { return task.taskStatus === "Completed" }).length
-    let inProgress = tasks.filter(function(task) { return task.taskStatus === "In Progress" }).length
-    let pending = tasks.filter(function(task) { return task.taskStatus === "Pending" }).length
-    let notStarted = tasks.filter(function(task) { return task.taskStatus === "Not Started" }).length
-    let hrs = tasks.reduce(function(sum, task) { return sum + (Number(task.hrs) || 0) }, 0)
+function updateStatus(index, value) {
+    tasks[index].taskStatus = value
+    saveData()
+    updateSummary()
+}
 
+function updateOwner(index, value) {
+    tasks[index].owner = value
+    saveData()
+}
+
+function deleteRow(index) {
+    tasks[index] = { taskID: "", owner: "", description: "", assignedDate: "", taskStatus: "Not Started", completionDate: "", dep: "", hrs: "" }
+    saveData()
+    renderTable()
+    updateSummary()
+}
+
+function updateSummary() {
+    let filledTasks = tasks.filter(t => t.taskID.trim() !== "")
+    let total = filledTasks.length
+    let completed = filledTasks.filter(t => t.taskStatus === "Completed").length
+    let inProgress = filledTasks.filter(t => t.taskStatus === "In Progress").length
+    let pending = filledTasks.filter(t => t.taskStatus === "Pending").length
+    let notStarted = filledTasks.filter(t => t.taskStatus === "Not Started").length
+    let hrs = filledTasks.reduce((sum, t) => sum + (Number(t.hrs) || 0), 0)
     totalCount.textContent = total
     completedCount.textContent = completed
     inProgressCount.textContent = inProgress
@@ -167,40 +159,14 @@ function updateSummary() {
     totalHrs.textContent = hrs
 }
 
-function deleteTask(index) {
-    tasks.splice(index, 1)
-    saveData()
-    renderTable()
-    updateSummary()
-}
-
-clearBtn.addEventListener("click", function(){
-    addTaskID.value = ""
-    owners.value = ""
-    taskDescription.value = ""
-    dateTimeInput.value = ""
-    status.value = "Completed"
-    completionTimeInput.value = ""
-    dependency.value = ""
-    hrsLogged.value = ""
-})
-
 prev.addEventListener("click", function() {
     currentDate.setMonth(currentDate.getMonth() - 1)
-    loadData()
-    renderTable()
-    renderOwners()
-    updateSummary()
-    updateMonthLabel()
+    loadData(); renderTable(); renderOwners(); updateSummary(); updateMonthLabel()
 })
 
 next.addEventListener("click", function() {
     currentDate.setMonth(currentDate.getMonth() + 1)
-    loadData()
-    renderTable()
-    renderOwners()
-    updateSummary()
-    updateMonthLabel()
+    loadData(); renderTable(); renderOwners(); updateSummary(); updateMonthLabel()
 })
 
 loadData()
@@ -211,6 +177,8 @@ updateMonthLabel()
 
 GenerateReport.addEventListener("click", function() {
     const { Document, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle, Packer, ShadingType } = docx
+
+    let filledTasks = tasks.filter(t => t.taskID.trim() !== "")
 
     const borderStyle = {
         top: { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" },
@@ -241,12 +209,12 @@ GenerateReport.addEventListener("click", function() {
 
     const summaryRow = new TableRow({
         children: [
-            makeCell(`${tasks.length} Total Tasks`, true, summaryCellStyle),
-            makeCell(`${tasks.filter(t => t.taskStatus === "Completed").length} Completed`, true, summaryCellStyle),
-            makeCell(`${tasks.filter(t => t.taskStatus === "In Progress").length} In Progress`, true, summaryCellStyle),
-            makeCell(`${tasks.filter(t => t.taskStatus === "Pending").length} Pending`, true, summaryCellStyle),
-            makeCell(`${tasks.filter(t => t.taskStatus === "Not Started").length} Not Started`, true, summaryCellStyle),
-            makeCell(`${tasks.reduce((sum, t) => sum + (Number(t.hrs) || 0), 0)} Total Hrs`, true, summaryCellStyle),
+            makeCell(`${filledTasks.length} Total Tasks`, true, summaryCellStyle),
+            makeCell(`${filledTasks.filter(t => t.taskStatus === "Completed").length} Completed`, true, summaryCellStyle),
+            makeCell(`${filledTasks.filter(t => t.taskStatus === "In Progress").length} In Progress`, true, summaryCellStyle),
+            makeCell(`${filledTasks.filter(t => t.taskStatus === "Pending").length} Pending`, true, summaryCellStyle),
+            makeCell(`${filledTasks.filter(t => t.taskStatus === "Not Started").length} Not Started`, true, summaryCellStyle),
+            makeCell(`${filledTasks.reduce((sum, t) => sum + (Number(t.hrs) || 0), 0)} Total Hrs`, true, summaryCellStyle),
         ]
     })
 
@@ -255,7 +223,7 @@ GenerateReport.addEventListener("click", function() {
             .map(text => makeCell(text, true, headerCellStyle))
     })
 
-    const dataRows = tasks.map(function(task) {
+    const dataRows = filledTasks.map(function(task) {
         return new TableRow({
             children: [
                 makeCell(task.taskID, true, { borders: borderStyle }),
@@ -269,6 +237,24 @@ GenerateReport.addEventListener("click", function() {
             ]
         })
     })
+
+    let total = filledTasks.length
+    let completed = filledTasks.filter(t => t.taskStatus === "Completed").length
+    let inProgress = filledTasks.filter(t => t.taskStatus === "In Progress").length
+    let pending = filledTasks.filter(t => t.taskStatus === "Pending").length
+    let notStarted = filledTasks.filter(t => t.taskStatus === "Not Started").length
+    let hrs = filledTasks.reduce((sum, t) => sum + (Number(t.hrs) || 0), 0)
+
+    let ownerSummaries = ownerNames.map(function(name) {
+        let ownerTasks = filledTasks.filter(t => t.owner === name)
+        if (ownerTasks.length === 0) return null
+        let done = ownerTasks.filter(t => t.taskStatus === "Completed").length
+        let inProg = ownerTasks.filter(t => t.taskStatus === "In Progress").length
+        let pend = ownerTasks.filter(t => t.taskStatus === "Pending").length
+        return `${name} has ${ownerTasks.length} task(s) — ${done} completed, ${inProg} in progress, ${pend} pending.`
+    }).filter(Boolean).join(" ")
+
+    let scrumText = `As of ${month_year.textContent}, the team has ${total} tasks in total. ${completed} task(s) are completed, ${inProgress} are in progress, ${pending} are pending and ${notStarted} have not yet started. Total hours logged stand at ${hrs}. Individual updates: ${ownerSummaries}`
 
     const doc = new Document({
         sections: [{
@@ -289,6 +275,14 @@ GenerateReport.addEventListener("click", function() {
                 new Paragraph({ text: "" }),
                 new Paragraph({
                     children: [new TextRun({ text: "This report provides a consolidated view of all project tasks, their current status, assigned owners, and logged hours.", size: 20, font: "Calibri", color: "444444" })]
+                }),
+                new Paragraph({ text: "" }),
+                new Paragraph({
+                    children: [new TextRun({ text: "Scrum Summary", bold: true, size: 24, font: "Calibri", color: "1a1a2e" })]
+                }),
+                new Paragraph({ text: "" }),
+                new Paragraph({
+                    children: [new TextRun({ text: scrumText, size: 20, font: "Calibri", color: "444444", italics: true })]
                 }),
                 new Paragraph({ text: "" }),
                 new Paragraph({
@@ -333,4 +327,3 @@ GenerateReport.addEventListener("click", function() {
         URL.revokeObjectURL(url)
     })
 })
-

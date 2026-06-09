@@ -306,3 +306,10 @@ tr:hover {
     gap: 8px;
     margin-bottom: 12px;
 }
+
+td {
+    border: 1px solid var(--border);
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 200px;
+}
