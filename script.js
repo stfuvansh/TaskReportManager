@@ -100,7 +100,8 @@ function renderTable() {
             ${ownerNames.map(name => `<option ${task.owner === name ? 'selected' : ''} value="${name}">${name}</option>`).join("")}
             </select>
             </td>
-            <td contenteditable="true">${task.assignedDate}</td>
+            <td><input type="datetime-local" value="${task.assignedDate}" onchange="updateAssignedDate(${index}, this.value)"></td>
+            <td><input type="datetime-local" value="${task.completionDate}" onchange="updateCompletionDate(${index}, this.value)"></td>
             <td>
                 <select onchange="updateStatus(${index}, this.value)">
                     <option ${task.taskStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
@@ -109,7 +110,6 @@ function renderTable() {
                     <option ${task.taskStatus === 'Completed' ? 'selected' : ''}>Completed</option>
                 </select>
             </td>
-            <td contenteditable="true">${task.completionDate}</td>
             <td contenteditable="true">${task.dep}</td>
             <td contenteditable="true">${task.hrs}</td>
             <td><button onclick="deleteRow(${index})">✕</button></td>
@@ -118,10 +118,8 @@ function renderTable() {
         let cells = tr.querySelectorAll("td[contenteditable]")
         cells[0].addEventListener("blur", function() { tasks[index].taskID = cells[0].innerText.trim(); saveData(); updateSummary() })
         cells[1].addEventListener("blur", function() { tasks[index].description = cells[1].innerText.trim(); saveData() })
-        cells[2].addEventListener("blur", function() { tasks[index].assignedDate = cells[2].innerText.trim(); saveData() })
-        cells[3].addEventListener("blur", function() { tasks[index].completionDate = cells[3].innerText.trim(); saveData() })
-        cells[4].addEventListener("blur", function() { tasks[index].dep = cells[4].innerText.trim(); saveData() })
-        cells[5].addEventListener("blur", function() { tasks[index].hrs = cells[5].innerText.trim(); saveData(); updateSummary() })
+        cells[2].addEventListener("blur", function() { tasks[index].dep = cells[2].innerText.trim(); saveData() })
+        cells[3].addEventListener("blur", function() { tasks[index].hrs = cells[3].innerText.trim(); saveData(); updateSummary() })
     })
 }
 
@@ -133,6 +131,16 @@ function updateStatus(index, value) {
 
 function updateOwner(index, value) {
     tasks[index].owner = value
+    saveData()
+}
+
+function updateAssignedDate(index, value) {
+    tasks[index].assignedDate = value
+    saveData()
+}
+
+function updateCompletionDate(index, value) {
+    tasks[index].completionDate = value
     saveData()
 }
 
