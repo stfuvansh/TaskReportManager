@@ -101,7 +101,6 @@ function renderTable() {
             </select>
             </td>
             <td><input type="datetime-local" value="${task.assignedDate}" onchange="updateAssignedDate(${index}, this.value)"></td>
-            <td><input type="datetime-local" value="${task.completionDate}" onchange="updateCompletionDate(${index}, this.value)"></td>
             <td>
                 <select onchange="updateStatus(${index}, this.value)">
                     <option ${task.taskStatus === 'Not Started' ? 'selected' : ''}>Not Started</option>
@@ -110,6 +109,7 @@ function renderTable() {
                     <option ${task.taskStatus === 'Completed' ? 'selected' : ''}>Completed</option>
                 </select>
             </td>
+            <td><input type="datetime-local" value="${task.completionDate}" onchange="updateCompletionDate(${index}, this.value)"></td>
             <td contenteditable="true">${task.dep}</td>
             <td contenteditable="true">${task.hrs}</td>
             <td><button onclick="deleteRow(${index})">✕</button></td>
